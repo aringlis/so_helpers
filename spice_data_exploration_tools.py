@@ -249,10 +249,40 @@ def make_spice_summary_plots(raster_file = None, sit_and_stare_file = None, eui_
             plt.ylabel('Intensity')
 
         plt.savefig('spice_data_exploration_fig4.png',dpi=200)
+
+        #Fig 5: show a height-time plot of each sit and stare spectral window (if supplied)
+        #--------------------------------
+        
+        plt_rows = 2
+        plt_columns = int(np.ceil(n_sit_win/2))
+  
+        plt.figure(5,figsize = (15,8))
+        plt.subplots_adjust(left=0.07,right=0.95,top=0.95,bottom=0.07,hspace=0.3, wspace = 0.5)
+
+        for m, window in enumerate(stare_spectral_windows):
+
+            win = stare_result[window]
+            plt.subplot(plt_rows,plt_columns,m+1)
+            line = win[:,:,:,0]
+            ycoords = line.axis_world_coords_values('custom:pos.helioprojective.lat').custom_pos_helioprojective_lat.to('arcsec')
+            tt = line.axis_world_coords_values('time').time
+
+            #sum over the wavelength dimension, leaving time and y
+            yslit_data = np.nansum(line.data,1)
+
+            #now display the height_time plot
+            plt.pcolormesh(tt.value,ycoords.value,yslit_data.T,shading='nearest',cmap='inferno')
+            plt.ylim(ycoords.value[-1],ycoords.value[0])
+            plt.xlabel('Time (s)')
+            plt.ylabel('Y (arcsec)')
+            plt.title(window)
+
+        plt.savefig('spice_data_exploration_fig5.png',dpi=200)
         plt.show()
+        
+        
 
-
-def make_timeseries_from_sit_and_stare_fileset(sit_and_stare_files):
+def make_timeseries_from_sit_and_stare_fileset(sit_and_stare_files, height_time_plots=False):
 
     # read the first file to find out which spectral windows are in the fileset
     sit_and_stare_files.sort()
@@ -296,7 +326,6 @@ def make_timeseries_from_sit_and_stare_fileset(sit_and_stare_files):
         tmax_inds = []
 
         for j, s in enumerate(spectral_windows):
-            #extract just a single slit exposure (wavelength and y information at some time t=0)
             line = stare_result[s][:,:,:,0]
 
             line_timeseries = np.nansum(line.data,(1,2))
@@ -310,7 +339,7 @@ def make_timeseries_from_sit_and_stare_fileset(sit_and_stare_files):
             if j == 0:
                 lightcurves['time'].extend(tt2)
                 
-            
+
             
 
     #now make a plot
@@ -339,7 +368,13 @@ def make_timeseries_from_sit_and_stare_fileset(sit_and_stare_files):
 
     return lightcurves
 
+
         
+        
+                
+        
+    
+    
         
     
     
