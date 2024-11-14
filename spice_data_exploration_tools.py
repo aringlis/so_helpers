@@ -272,7 +272,7 @@ def make_spice_summary_plots(raster_file = None, sit_and_stare_file = None, eui_
 
             #now display the height_time plot
             plt.pcolormesh(tt.value,ycoords.value,yslit_data.T,shading='nearest',cmap='inferno')
-            plt.ylim(ycoords.value[-1],ycoords.value[0])
+            #plt.ylim(ycoords.value[-1],ycoords.value[0])
             plt.xlabel('Time (s)')
             plt.ylabel('Y (arcsec)')
             plt.title(window)
@@ -282,7 +282,7 @@ def make_spice_summary_plots(raster_file = None, sit_and_stare_file = None, eui_
         
         
 
-def make_timeseries_from_sit_and_stare_fileset(sit_and_stare_files, height_time_plots=False):
+def make_timeseries_from_sit_and_stare_fileset(sit_and_stare_files,yregion = None):
 
     # read the first file to find out which spectral windows are in the fileset
     sit_and_stare_files.sort()
@@ -328,7 +328,10 @@ def make_timeseries_from_sit_and_stare_fileset(sit_and_stare_files, height_time_
         for j, s in enumerate(spectral_windows):
             line = stare_result[s][:,:,:,0]
 
-            line_timeseries = np.nansum(line.data,(1,2))
+            if yregion:
+                line_timeseries = np.nansum(line.data[:,:,yregion[0]:yregion[1]],(1,2))
+            else:
+                line_timeseries = np.nansum(line.data,(1,2))
             tt = line.axis_world_coords_values('time').time
             tt2 = []
             for t in tt:
