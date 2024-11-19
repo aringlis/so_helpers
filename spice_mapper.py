@@ -1,24 +1,17 @@
-
 import pandas
 import matplotlib.pyplot as plt
 import numpy as np
 import datetime
 
-    
-    #important keys
-    #DATE-BEG-ISO
-    #DATE-END-ISO
-    #SOOPNAME
-    #CRVAL1
-    #CRVAL2
-    #STUDYTYP
-    #CDELT1
-    #CDELT2
-    #SPIOBSID
 
-def spice_mapper(date, catalog_file = 'spice_catalog.txt'):
+def spice_mapper(date, catalog_file = 'spice_catalog.csv'):
+    '''
+    This tool makes a representative plot of all SPICE observations on a given day.
+    The SPICE catalog file is needed to use this tool.'''
+
+    if type(date) != datetime.datetime:
+        raise ValueError('Input date must be in datetime format, e.g. date = datetime.datetime(2024,3,22)')
     
-    catalog_file = '/Users/ainglis/physics/spice/spice_catalog_20241005.csv'
     
     # read in the SPICE catalog and add two new time columns to enable easy searching
     spicecat = pandas.read_csv(catalog_file)
