@@ -29,10 +29,22 @@ def spice_mapper(date, catalog_file = 'spice_catalog.csv'):
                            (spicecat['DATE-END-ISO'] < date + datetime.timedelta(days=1))]
 
     if len(entries) == 0:
+
         print(' ')
         print('--------------')
         print('No observations taken by SPICE on ' + date.isoformat())
         print('--------------')
+        
+        plt.figure(1,figsize=(18,8))
+        plt.subplots_adjust(left = 0.06, right=0.5,top=0.95,bottom=0.08)
+        plt.title('SPICE observations on ' + date.isoformat())
+        ax = plt.gca()
+        ax.axis('equal')
+        plt.xlim([-3500,3500])
+        plt.ylim([-3500,3500])
+        plt.figtext(0.12,0.3,'NO SPICE OBSERVATIONS',fontsize=30,fontweight='bold',rotation=-30)
+        plt.savefig('spice_observations_on_' + date.strftime('%Y%m%d') + '.png',dpi=300)
+        plt.show()
         return
     
     # put the valid entries in order by start time
