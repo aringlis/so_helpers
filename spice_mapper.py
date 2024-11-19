@@ -7,7 +7,8 @@ import datetime
 def spice_mapper(date, catalog_file = 'spice_catalog.csv'):
     '''
     This tool makes a representative plot of all SPICE observations on a given day.
-    The SPICE catalog file is needed to use this tool.'''
+    The SPICE catalog file is needed to use this tool.
+    '''
 
     if type(date) != datetime.datetime:
         raise ValueError('Input date must be in datetime format, e.g. date = datetime.datetime(2024,3,22)')
@@ -28,8 +29,8 @@ def spice_mapper(date, catalog_file = 'spice_catalog.csv'):
     entries = spicecat[(spicecat['DATE-BEG-ISO'] > date) &
                            (spicecat['DATE-END-ISO'] < date + datetime.timedelta(days=1))]
 
+    # if there are no observations for the chosen date, make a blank plot and exit
     if len(entries) == 0:
-
         print(' ')
         print('--------------')
         print('No observations taken by SPICE on ' + date.isoformat())
