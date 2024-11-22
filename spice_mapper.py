@@ -8,7 +8,7 @@ import sunpy
 from sunpy import map
 
 
-def spice_mapper(date, catalog_file = 'spice_catalog.csv', eui_file = None):
+def spice_mapper(date, catalog_file = 'spice_catalog.csv', eui_file = None, show = False):
     '''
     This tool makes a representative plot of all SPICE observations on a given day.
     The SPICE catalog file is needed to use this tool.
@@ -49,7 +49,9 @@ def spice_mapper(date, catalog_file = 'spice_catalog.csv', eui_file = None):
         plt.ylim([-3500,3500])
         plt.figtext(0.12,0.3,'NO SPICE OBSERVATIONS',fontsize=30,fontweight='bold',rotation=-30)
         plt.savefig('spice_observations_on_' + date.strftime('%Y%m%d') + '.png',dpi=300)
-        plt.show()
+        if show:
+            plt.show()
+        plt.close()
         return
     
     # put the valid entries in order by start time
@@ -115,7 +117,7 @@ def spice_mapper(date, catalog_file = 'spice_catalog.csv', eui_file = None):
             lenx = first_entry['NAXIS1'] * first_entry['CDELT1']
             leny = first_entry['NAXIS2'] * first_entry['CDELT2']
             x,y = calculate_corners(first_entry['CRVAL1'],first_entry['CRVAL2'],lenx,leny,first_entry['CROTA'],plot=False)
-            description = first_entry['SOOPNAME'] + ' | ' + first_entry['STUDYTYP'] + ' | ' + first_entry['DATE-BEG'] + ' - ' + first_entry['DATE-END']
+            description = str(first_entry['SOOPNAME']) + ' | ' + first_entry['STUDYTYP'] + ' | ' + first_entry['DATE-BEG'] + ' - ' + first_entry['DATE-END']
 
             if eui_file:
                 coord1 = SkyCoord(x * u.arcsec, y * u.arcsec,frame = euimap_rotated.coordinate_frame)
@@ -134,7 +136,7 @@ def spice_mapper(date, catalog_file = 'spice_catalog.csv', eui_file = None):
             # this usually works, but could occasionally look strange
             xfirst,yfirst = calculate_corners(first_entry['CRVAL1'],first_entry['CRVAL2'],lenxfirst,lenyfirst,first_entry['CROTA'],plot=False)
             xlast,ylast = calculate_corners(last_entry['CRVAL1'],last_entry['CRVAL2'],lenxlast,lenylast,last_entry['CROTA'],plot=False)
-            description = first_entry['SOOPNAME'] + ' | ' + first_entry['STUDYTYP'] + ' (x'+str(num_repeats) + ') | ' + first_entry['DATE-BEG'] + ' - ' + last_entry['DATE-END']
+            description = str(first_entry['SOOPNAME']) + ' | ' + first_entry['STUDYTYP'] + ' (x'+str(num_repeats) + ') | ' + first_entry['DATE-BEG'] + ' - ' + last_entry['DATE-END']
 
             if eui_file:
                 coord1 = SkyCoord([xfirst[0],xlast[1],xlast[2],xfirst[3],xfirst[4]] * u.arcsec, [yfirst[0],ylast[1],ylast[2],yfirst[3],yfirst[4]] * u.arcsec,
@@ -172,7 +174,9 @@ def spice_mapper(date, catalog_file = 'spice_catalog.csv', eui_file = None):
         plt.figtext(0.09,0.12,'$D_{sun}$ = ' + str(round(entries.iloc[0]['DSUN_AU'],2)) + ' AU')
         plt.figtext(0.09,0.10,'HG lon = ' + str(round(entries.iloc[0]['HGLN_OBS'],1)) + '$^{\circ}$')
         plt.savefig('spice_observations_on_' + date.strftime('%Y%m%d') + '.png',dpi=300)
-    plt.show()
+    if show:
+        plt.show()
+    plt.close()
 
 
 
