@@ -9,7 +9,6 @@ import sunpy
 import sunpy.map
 from astropy.coordinates import SkyCoord
 import astropy.units as u
-import datetime
 
 def make_spice_summary_plots(raster_file = None, sit_and_stare_file = None, eui_file = None):
     '''Make some summary plots of supplied SPICE raster and sit and stare files.
@@ -46,27 +45,35 @@ def make_spice_summary_plots(raster_file = None, sit_and_stare_file = None, eui_
         sit_win = stare_result[list(stare_result.keys())[0]]
         sit_xx = sit_win.axis_world_coords_values('custom:pos.helioprojective.lon')
         sit_yy = sit_win.axis_world_coords_values('custom:pos.helioprojective.lat')
-        sit_x0 = sit_xx.custom_pos_helioprojective_lon.to('arcsec')[0]
-        sit_x1 = sit_xx.custom_pos_helioprojective_lon.to('arcsec')[-1]
-        sit_y0 = sit_yy.custom_pos_helioprojective_lat.to('arcsec')[0]
-        sit_y1 = sit_yy.custom_pos_helioprojective_lat.to('arcsec')[-1]
+
+        sit_xx_array = sit_xx.custom_pos_helioprojective_lon.to('arcsec')
+        sit_yy_array = sit_yy.custom_pos_helioprojective_lat.to('arcsec')
+        sit_xx_array[sit_xx_array < -180 *u.deg] += 360 *u.deg
+        sit_yy_array[sit_yy_array < -180 *u.deg] += 360 *u.deg
+
+        sit_x0 = sit_xx_array[0].to('arcsec')
+        sit_x1 = sit_xx_array[-1].to('arcsec')
+        sit_y0 = sit_yy_array[0].to('arcsec')
+        sit_y1 = sit_yy_array[-1].to('arcsec')
+       # sit_x0 = sit_xx.custom_pos_helioprojective_lon.to('arcsec')[0]
+       # sit_x1 = sit_xx.custom_pos_helioprojective_lon.to('arcsec')[-1]
+       # sit_y0 = sit_yy.custom_pos_helioprojective_lat.to('arcsec')[0]
+       # sit_y1 = sit_yy.custom_pos_helioprojective_lat.to('arcsec')[-1]
         sit_tstart = sit_win.meta.date_start.strftime('%H:%M:%S')
         
 
     
     #Fig 1: show the raster image from each spectral window
     #-------------------------------------------------------
-
-    raster_spectral_windows = raster_result.keys()
-    #raster_spectral_windows = ['Ne VIII 770 - Peak','Ly Beta 1025 (Merged)']
+    
     plt_rows = 2
     plt_columns = int(np.ceil(n_win/2))
-    #plt_columns = int(len(raster_spectral_windows))
+        
     plt.figure(1,figsize = (15,8))
     plt.subplots_adjust(left=0.07,right=0.95,top=0.95,bottom=0.07,hspace=0.3, wspace = 0.5)
 
-    
-    
+    raster_spectral_windows = raster_result.keys()
+
     for i, r in enumerate(raster_spectral_windows):
 
         plt.subplot(plt_rows,plt_columns,i+1)
@@ -249,135 +256,6 @@ def make_spice_summary_plots(raster_file = None, sit_and_stare_file = None, eui_
             plt.ylabel('Intensity')
 
         plt.savefig('spice_data_exploration_fig4.png',dpi=200)
-
-        #Fig 5: show a height-time plot of each sit and stare spectral window (if supplied)
-        #--------------------------------
-        
-        plt_rows = 2
-        plt_columns = int(np.ceil(n_sit_win/2))
-  
-        plt.figure(5,figsize = (15,8))
-        plt.subplots_adjust(left=0.07,right=0.95,top=0.95,bottom=0.07,hspace=0.3, wspace = 0.5)
-
-        for m, window in enumerate(stare_spectral_windows):
-
-            win = stare_result[window]
-            plt.subplot(plt_rows,plt_columns,m+1)
-            line = win[:,:,:,0]
-            ycoords = line.axis_world_coords_values('custom:pos.helioprojective.lat').custom_pos_helioprojective_lat.to('arcsec')
-            tt = line.axis_world_coords_values('time').time
-
-            #sum over the wavelength dimension, leaving time and y
-            yslit_data = np.nansum(line.data,1)
-
-            #now display the height_time plot
-            plt.pcolormesh(tt.value,ycoords.value,yslit_data.T,shading='nearest',cmap='inferno')
-            #plt.ylim(ycoords.value[-1],ycoords.value[0])
-            plt.xlabel('Time (s)')
-            plt.ylabel('Y (arcsec)')
-            plt.title(window)
-
-        plt.savefig('spice_data_exploration_fig5.png',dpi=200)
         plt.show()
-        
-        
-
-def make_timeseries_from_sit_and_stare_fileset(sit_and_stare_files,yregion = None):
-
-    # read the first file to find out which spectral windows are in the fileset
-    sit_and_stare_files.sort()
-    first_file = read_spice_l2_fits(sit_and_stare_files[0])
-    spectral_windows = first_file.keys()
-
-    print(' ')
-    print(' ')
-    print('The loaded sit and stare file contains the following spectral windows:')
-    print('----------------------')
-    for key in spectral_windows:
-        print(key)
-    print('----------------------')
-    print(' ')
-    print(' ')
 
 
-    lightcurves = {}
-    lightcurves['time'] = []
-    for s in spectral_windows:
-        lightcurves[s] = []
-
-    
-    # now open all the files in sequence and append them together
-    for f in sit_and_stare_files:
-        stare_result = read_spice_l2_fits(f)
-    
-        # extract the coordinate info for the sit and stare observation
-        sit_win = stare_result[list(stare_result.keys())[0]]
-        sit_xx = sit_win.axis_world_coords_values('custom:pos.helioprojective.lon')
-        sit_yy = sit_win.axis_world_coords_values('custom:pos.helioprojective.lat')
-        sit_x0 = sit_xx.custom_pos_helioprojective_lon.to('arcsec')[0]
-        sit_x1 = sit_xx.custom_pos_helioprojective_lon.to('arcsec')[-1]
-        sit_y0 = sit_yy.custom_pos_helioprojective_lat.to('arcsec')[0]
-        sit_y1 = sit_yy.custom_pos_helioprojective_lat.to('arcsec')[-1]
-        sit_tstart = sit_win.meta.date_start.datetime #strftime('%H:%M:%S')
-
-        
-        
-        colors = mpl.colormaps['tab20'].colors
-        tmax_inds = []
-
-        for j, s in enumerate(spectral_windows):
-            line = stare_result[s][:,:,:,0]
-
-            if yregion:
-                line_timeseries = np.nansum(line.data[:,:,yregion[0]:yregion[1]],(1,2))
-            else:
-                line_timeseries = np.nansum(line.data,(1,2))
-            tt = line.axis_world_coords_values('time').time
-            tt2 = []
-            for t in tt:
-                tt2.append(sit_tstart + datetime.timedelta(seconds = t.value))
-                
-
-            lightcurves[s].extend(line_timeseries)
-            if j == 0:
-                lightcurves['time'].extend(tt2)
-                
-
-            
-
-    #now make a plot
-    num_rows = len(spectral_windows)
-    plt.figure(9, figsize=(14,9))
-    plt.subplots_adjust(hspace=0, left = 0.08, right = 0.95, bottom = 0.05, top = 0.95)
-    for j, s in enumerate(spectral_windows):
-        plt.subplot(9,1,j+1)
-        plt.plot(lightcurves['time'], lightcurves[s] / np.max(lightcurves[s]),label=s, color = colors[j])
-        plt.ylabel('I (norm.)',fontsize=8)
-        
-        plt.legend(fontsize=8, loc = 'upper right')
-        if j == 0:
-            plt.title('Line Intensity Timeseries (Sit-and-stare, summed in y and lambda)')
-        if j == num_rows:
-            plt.xlabel('Time (UT)',fontsize=8)
-
-    # find the time index with maximum amplitude and store for future use
-    tmax_inds.append(np.argmax(line_timeseries))
-            
-
-   # plt.legend(fontsize=8, bbox_to_anchor =(1.02,1.00),loc='upper left')
-   # plt.title('Line Intensity Timeseries (Sit-and-stare, summed in y and lambda)')
-    plt.savefig('spice_sit_and_stare_fileset_timeseries.png',dpi=200)
-    plt.show()
-
-    return lightcurves
-
-
-        
-        
-                
-        
-    
-    
-        
-    
-    
